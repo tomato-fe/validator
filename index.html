@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <link href="http://cdn.bootcss.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+    <title>validate</title>
+    <style type="text/css">
+    .v-error {
+        outline: 1px solid red;
+    }
+    </style>
+</head>
+<body>
+
+    <header class="container">
+        <h1>Basic Demo</h1>
+    </header>
+    <div class="container">
+        <form id="form">
+            <div class="control-group input-append">
+                <input type="text" name="name" id="name" form="form" data-v-pattern="/^[abc]+$/i" />
+
+                <label for="name" class="add-on">
+                    <span class="icon-asterisk"></span>
+                    pattern ABC
+                </label>
+            </div>
+            <div class="control-group input-append">
+                <input type="text" name="nickname" id="nickname" data-v-required="true" />
+                <label for="nickname" class="add-on">
+                    <span class="icon-asterisk"></span>
+                    required
+                </label>
+            </div>
+
+            <div class="control-group input-append">
+                <input type="text" name="site" id="site" />
+                <label for="site" class="add-on">Site</label>
+            </div>
+
+            <div class="control-group input-append">
+                <input type="text" name="age" id="age"/>
+                <label for="age" class="add-on">
+                    <span class="icon-asterisk"></span>
+                    Age
+                </label>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">Send</button>
+                <button type="reset" class="btn">Reset</button>
+            </div>
+        </form>
+    </div>
+
+    <script src="http://cdn.bootcss.com/jquery/1.9.1/jquery.js"></script>
+    <script src="./index.js"></script>
+    <script>
+      $('#form').validate({
+        onKeyup : true,
+        eachField: function(event, status, options) {
+        },
+        eachValidField : function(event, status, options) {
+            $(this).removeClass('v-error')
+        },
+        eachInvalidField : function(event, status, options) {
+            $(this).addClass('v-error')
+            console.log('----no:----')
+        }
+      })
+    </script>
+
+</body>
+</html>
