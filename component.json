@@ -1,0 +1,13 @@
+{
+  "name": "validator",
+  "repo": "tomato-fe/validator",
+  "description": "jq plug validator",
+  "version": "0.1.0",
+  "keywords": ["validator", "jq"],
+  "main": "index.js",
+  "files": [
+    "index.css",
+    "index.js"
+  ],
+  "license": "MIT"
+}
