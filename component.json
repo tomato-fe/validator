@@ -6,7 +6,6 @@
   "keywords": ["validator", "jq"],
   "main": "index.js",
   "files": [
-    "index.css",
     "index.js"
   ],
   "license": "MIT"
