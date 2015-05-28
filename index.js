@@ -23,7 +23,7 @@
 			// A fielter to the fields
 			filter : '*'
 	    },
-    	__data_name__ = 'validate',
+    	__plugName__ = 'tc.validate',
 		type = ['input[type!="checkbox"][type!="radio"],textarea', 'select', 'input[type="checkbox"],input[type="radio"]'],
 		allTypes = 'input,textarea,select',
     	// Method to validate each fields
@@ -42,7 +42,7 @@
 				// Current field value
 				fieldValue = field.val() || '',
 				// An index of extend
-				fieldValidate = field.data('v-validation'),
+				fieldValidate = field.data('v-validator'),
 				// A validation object (jQuery.fn.validateExtend)
 				validation = fieldValidate !== undefined ? extend[fieldValidate] : {},
 				// A regular expression to validate field value
@@ -130,94 +130,128 @@
 			// Returns the field status
 			return status;
 		};
-		$.extend({
-			validateExtend : function(options) {
-				return $.extend(extend, options);
-			},
-			validateSetup : function(options) {
-				return $.extend(defaults, options);
-			}
-		}).fn.extend({
-			// Method to validate
-			validate : function(options) {
-				options = $.extend({}, defaults, options);
-				return $(this).validateDestroy().each(function() {
-					var form = $(this);
 
-					form.data(__data_name__, {
-						options : options
-					})
+		function Validator(element, options) {
+			options = $.extend({}, defaults, options)
+			this.element = $(element)
+			this.settings = options
+			this.fields = this.element.find(allTypes).filter(options.filter)
 
-					var
-						fields = form.find(allTypes),
-						// Events namespace
-						namespace = options.nameSpace;
+			this._bindEvent()
+		}
 
-					fields = fields.filter(options.filter);
-					// If onKeyup is enabled
-					if(!!options.onKeyup) {
-						fields.filter(type[0]).on('keyup.' + namespace, function(event) {
-							validateField.call(this, event, options);
-						});
-					}
-					// If onBlur is enabled
-					if(!!options.onBlur) {
-						fields.on('blur.' + namespace, function(event) {
-							validateField.call(this, event, options);
-						});
-					}
-					// If onChange is enabled
-					if(!!options.onChange) {
-						fields.on('change.' + namespace, function(event) {
-							validateField.call(this, event, options);
-						});
-					}
-					// If onSubmit is enabled
-					if(!!options.onSubmit && form.is('form')) {
-						form.on('submit.' + namespace, function(event) {
-							var formValid = true;
-							fields.each(function() {
-								var status = validateField.call(this, event, options);
-								if(!status.pattern || !status.conditional || !status.required) {
-									formValid = false;
-								}
-							});
-							// If form is valid
-							if(formValid) {
-								// Send form?
-								if(!options.sendForm) {
+		$.extend(Validator.prototype, {
+			_bindEvent: function() {
+				var form = this.element,
+					options = this.settings,
+					fields = this.fields,
+					namespace = options.nameSpace;
 
-									event.preventDefault();
-								}
-								// Is a function?
-								if($.isFunction(options.valid)) {
-									options.valid.call(form, event, options);
-								}
-							} else {
-								event.preventDefault();
-                				event.stopImmediatePropagation();
-								// Is a function?
-								if($.isFunction(options.invalid)) {
-									options.invalid.call(form, event, options);
-								}
+				// If onKeyup is enabled
+				if(!!options.onKeyup) {
+					fields.filter(type[0]).on('keyup.' + namespace, function(event) {
+						validateField.call(this, event, options);
+					});
+				}
+				// If onBlur is enabled
+				if(!!options.onBlur) {
+					fields.on('blur.' + namespace, function(event) {
+						validateField.call(this, event, options);
+					});
+				}
+				// If onChange is enabled
+				if(!!options.onChange) {
+					fields.on('change.' + namespace, function(event) {
+						validateField.call(this, event, options);
+					});
+				}
+				// If onSubmit is enabled
+				if(!!options.onSubmit && form.is('form')) {
+					form.on('submit.' + namespace, function(event) {
+						var formValid = true;
+						fields.each(function() {
+							var status = validateField.call(this, event, options);
+							if(!status.pattern || !status.conditional || !status.required) {
+								formValid = false;
 							}
 						});
+						// If form is valid
+						if(formValid) {
+							// Send form?
+							if(!options.sendForm) {
+
+								event.preventDefault();
+							}
+							// Is a function?
+							if($.isFunction(options.valid)) {
+								options.valid.call(form, event, options);
+							}
+						} else {
+							event.preventDefault();
+            				event.stopImmediatePropagation();
+							// Is a function?
+							if($.isFunction(options.invalid)) {
+								options.invalid.call(form, event, options);
+							}
+						}
+					});
+				}
+			},
+			destroy: function() {
+				var options = this.settings,
+					form = this.element,
+					fields = this.fields,
+					namespace = options.nameSpace
+
+				fields.off('.' + namespace)
+				form.off('.' + namespace)
+			},
+			validate: function() {
+				var options = this.settings,
+					fields = this.fields,
+					formValid = true;
+
+				fields.each(function() {
+					var status = validateField.call(this, event, options);
+					if(!status.pattern || !status.conditional || !status.required) {
+						formValid = false;
 					}
 				});
-			},
 
-			// Method to destroy validations
-			validateDestroy : function() {
-				var
-					form = $(this),
-					dataValidate = form.data(__data_name__);
-
-				if($.isPlainObject(dataValidate) && typeof(dataValidate.options.nameSpace) == 'string') {
-					var fields = form.removeData(__data_name__).find(allTypes)
-						// .add(form);
-					fields.off('.' + dataValidate.options.nameSpace);
-				}
-				return form;
+				return formValid
 			}
-		});
+		})
+
+		// PLUG 定义
+		// ==========================
+		function Plugin(option, params) {
+		    var ret
+		    this.each(function () {
+		        var $this = $(this),
+		            data  = $this.data(__plugName__),
+		            options
+
+		        if (typeof option === 'object') 
+		            options = option
+
+		        if (!data) $this.data(__plugName__, (data = new Validator(this, options) ) );
+
+		        if (typeof option === 'string') 
+		        	ret = data[option](params)
+		            
+		    })
+		    return ret === undefined ? this : ret
+		}
+
+		$.fn.validator = Plugin
+    	$.fn.validator.Constructor = Validator
+
+		$.extend({
+			validatorExtend : function(options) {
+				return $.extend(extend, options);
+			},
+			validatorSetup : function(options) {
+				return $.extend(defaults, options);
+			}
+		})
 }(jQuery);
