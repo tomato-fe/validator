@@ -117,10 +117,13 @@
 				if( !fieldPattern.test(fieldValue) ) {
 					status.pattern = false;
 					if ( event.type === 'keyup' && ($.type(keyupFilter) == 'regexp') ) {
-						field.val( fieldValue.replace(keyupFilter, '') )
-						// 触发原生change事件
-                		_fireEvent(field[0], 'keyup')
-						return;
+						var newVal = fieldValue.replace(keyupFilter, '')
+						field.val( newVal )
+						// 触发原生 keyup 事件
+						if (fieldValue !== newVal) {
+	                		_fireEvent(field[0], 'keyup')
+							return;
+						}
 					}
 				}
 			}
