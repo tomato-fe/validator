@@ -118,6 +118,9 @@
 					status.pattern = false;
 					if ( event.type === 'keyup' && ($.type(keyupFilter) == 'regexp') ) {
 						field.val( fieldValue.replace(keyupFilter, '') )
+						// 触发原生change事件
+                		_fireEvent(field[0], 'keyup')
+						return;
 					}
 				}
 			}
@@ -149,6 +152,18 @@
 			this.element = $(element)
 			this.settings = options
 			this._bindEvent()
+		}
+
+		function _fireEvent(target, type) {
+		    if (document.createEvent) {
+		        var ev = document.createEvent('HTMLEvents');
+		        ev.initEvent(type, false, true);  
+		        target.dispatchEvent(ev);
+		    } else {
+		        var eventObj = document.createEventObject();
+		        eventObj.target = target
+		        target.fireEvent("on"+ type, eventObj);
+		    }
 		}
 
 		$.extend(Validator.prototype, {
