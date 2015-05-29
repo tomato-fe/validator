@@ -6,7 +6,8 @@
     <title>validate</title>
     <style type="text/css">
     .v-error {
-        outline: 1px solid red;
+        border: 2px solid #DB3822;
+        outline: none;
     }
     </style>
 </head>
@@ -39,10 +40,17 @@
             </div>
 
             <div class="control-group input-append">
-                <input type="text" name="age" id="age"/>
+                <input type="text" name="age" id="age" data-v-validator="float2"/>
                 <label for="age" class="add-on">
                     <span class="icon-asterisk"></span>
-                    Age
+                    float2
+                </label>
+            </div>
+            <div class="control-group input-append">
+                <input type="text" name="integer" id="integer" data-v-validator="integer" data-v-msg="擦擦擦擦擦擦"/>
+                <label for="integer" class="add-on">
+                    <span class="icon-asterisk"></span>
+                    integer
                 </label>
             </div>
 
@@ -51,6 +59,9 @@
                 <button type="reset" class="btn">Reset</button>
             </div>
         </form>
+        <div id="msg"></div> 
+        <input id='txt' value="" /> 
+        <button id="trigger">xxxx</button>
     </div>
 
     <script src="http://cdn.bootcss.com/jquery/1.9.1/jquery.js"></script>
@@ -66,8 +77,30 @@
         eachInvalidField : function(event, status, options) {
             $(this).addClass('v-error')
             console.log('----no:----')
+            console.log(status.msg)
         }
       })
+
+
+      // //当状态改变的时候执行的函数 
+      // function handle() 
+      // {
+      //     document.getElementById('msg').innerHTML='输入的文字长度为：'+document.getElementById('txt').value.length; 
+      // } 
+ 
+      // $("#txt").on("input", function() { 
+      //       // alert($(this).val());
+      //       handle()
+      // }); 
+      // $("#txt").on("keyup", function() { 
+      //       console.log('up')
+      // }); 
+      
+      // $("#trigger").on("click", function() { 
+      //     $("#txt").val( Math.random() )
+      //       .trigger('input')
+      // }); 
+      
     </script>
 
 </body>

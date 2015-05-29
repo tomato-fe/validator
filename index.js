@@ -7,6 +7,7 @@
 			sendForm : true,
 			// Validate on event?
 			onSubmit : true,
+			onKeydown: true,
 			onKeyup : false,
 			onBlur : false,
 			onChange : false,
@@ -35,7 +36,8 @@
 				status = {
 					pattern : true,
 					conditional : true,
-					required : true
+					required : true,
+					msg: ''
 				},
 				// Current field
 				field = $(this),
@@ -49,10 +51,18 @@
 				fieldPattern = (field.data('v-pattern') || ($.type(validation.pattern) == 'regexp' ? validation.pattern : /(?:)/)),
 				// A index in the conditional object containing a function to validate the field value
 				fieldConditional = field.data('v-conditional') || validation.conditional,
+				keydownFilter = validation.keydownFilter,
+				keyupFilter = validation.keyupFilter,
 				// Is required?
 				fieldRequired = field.data('v-required'),
 				// Trim spaces?
 				reTrue = /^(true|)$/i;
+
+			if(event.type == 'keydown' && typeof(keydownFilter) == 'function') {
+				return keydownFilter(event)
+			}
+
+			status.msg = field.data('v-msg') || validation.msg || '';
 
 			fieldRequired = fieldRequired != '' ? (fieldRequired || !!validation.required) : true;
 			// fieldPattern Is not RegExp?
@@ -106,6 +116,9 @@
 			if(field.is(type[0])) {
 				if( !fieldPattern.test(fieldValue) ) {
 					status.pattern = false;
+					if ( event.type === 'keyup' && ($.type(keyupFilter) == 'regexp') ) {
+						field.val( fieldValue.replace(keyupFilter, '') )
+					}
 				}
 			}
 			if(typeof(validation.each) == 'function') {
@@ -135,8 +148,6 @@
 			options = $.extend({}, defaults, options)
 			this.element = $(element)
 			this.settings = options
-			this.fields = this.element.find(allTypes).filter(options.filter)
-
 			this._bindEvent()
 		}
 
@@ -144,24 +155,29 @@
 			_bindEvent: function() {
 				var form = this.element,
 					options = this.settings,
-					fields = this.fields,
 					namespace = options.nameSpace;
 
 				// If onKeyup is enabled
+				if(!!options.onKeydown) {
+					form.on('keydown.' + namespace, type[0], function(event) {
+						validateField.call(this, event, options)
+					})
+				}
+				// If onKeyup is enabled
 				if(!!options.onKeyup) {
-					fields.filter(type[0]).on('keyup.' + namespace, function(event) {
-						validateField.call(this, event, options);
-					});
+					form.on('keyup.' + namespace, type[0], function(event) {
+						validateField.call(this, event, options)
+					})
 				}
 				// If onBlur is enabled
 				if(!!options.onBlur) {
-					fields.on('blur.' + namespace, function(event) {
-						validateField.call(this, event, options);
-					});
+					form.on('blur.' + namespace, allTypes, function(event) {
+						validateField.call(this, event, options)
+					})
 				}
 				// If onChange is enabled
 				if(!!options.onChange) {
-					fields.on('change.' + namespace, function(event) {
+					form.on('change.' + namespace, allTypes, function(event) {
 						validateField.call(this, event, options);
 					});
 				}
@@ -169,6 +185,7 @@
 				if(!!options.onSubmit && form.is('form')) {
 					form.on('submit.' + namespace, function(event) {
 						var formValid = true;
+						fields = form.find(allTypes).filter(options.filter)
 						fields.each(function() {
 							var status = validateField.call(this, event, options);
 							if(!status.pattern || !status.conditional || !status.required) {
@@ -200,24 +217,25 @@
 			destroy: function() {
 				var options = this.settings,
 					form = this.element,
-					fields = this.fields,
-					namespace = options.nameSpace
+					namespace = options.nameSpace,
+					fields = fields = form.find(allTypes).filter(options.filter)
 
 				fields.off('.' + namespace)
 				form.off('.' + namespace)
 			},
 			validate: function() {
 				var options = this.settings,
-					fields = this.fields,
+					form = this.element,
 					formValid = true;
 
+				fields = form.find(allTypes).filter(options.filter)
 				fields.each(function() {
 					var status = validateField.call(this, event, options);
 					if(!status.pattern || !status.conditional || !status.required) {
 						formValid = false;
+						return false;// break;
 					}
 				});
-
 				return formValid
 			}
 		})
@@ -255,3 +273,45 @@
 			}
 		})
 }(jQuery);
+$.validatorExtend({
+	float2 : {
+	    required : true,
+	    pattern : /^[\d]+\.?[\d]{0,2}$/,
+	    keyupFilter: /[^\d\.]*/g,
+	    keydownFilter: function(e) {
+	    	var keyCode = e.keyCode
+	    	// 数字
+	    	if (keyCode >= 48 && keyCode <= 57 ) return true
+	    	// 小数字键盘
+	    	if (keyCode >= 96 && keyCode <= 105) return true
+	    	// Backspace键
+	    	if (keyCode == 8) return true
+	    	// 小数点
+	    	if (keyCode == 190 || keyCode == 110) return true
+	    	// 左右键
+	    	if (keyCode == 37 || keyCode == 39) return true
+	    	e.preventDefault()
+	    	return false
+	    },
+	    msg: '必填项,只允许填写数字(最多两位小数)'
+	},
+	integer : {
+	    required : true,
+	    pattern : /^[\d]*$/,
+	    keyupFilter: /[^\d]*/g,
+	    keydownFilter: function(e) {
+	    	var keyCode = e.keyCode
+	    	// 数字
+	    	if (keyCode >= 48 && keyCode <= 57 ) return true
+	    	// 小数字键盘
+	    	if (keyCode >= 96 && keyCode <= 105) return true
+	    	// Backspace键
+	    	if (keyCode == 8) return true
+	    	// 左右键
+	    	if (keyCode == 37 || keyCode == 39) return true
+	    	e.preventDefault()
+	    	return false
+	    },
+	    msg: '必填项,只允许填写数字'
+	}
+});
