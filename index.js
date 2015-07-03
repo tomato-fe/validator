@@ -61,10 +61,9 @@
 			if(event.type == 'keydown' && typeof(keydownFilter) == 'function') {
 				return keydownFilter(event)
 			}
-
 			status.msg = field.data('v-msg') || validation.msg || '';
 
-			fieldRequired = fieldRequired != '' ? (fieldRequired || !!validation.required) : true;
+			fieldRequired = fieldRequired !== '' ? (fieldRequired || !!validation.required) : true;
 			// fieldPattern Is not RegExp?
 			if($.type(fieldPattern) != 'regexp') {
 				// Converts to RegExp
@@ -117,13 +116,10 @@
 				if( !fieldPattern.test(fieldValue) ) {
 					status.pattern = false;
 					if ( event.type === 'keyup' && ($.type(keyupFilter) == 'regexp') ) {
-						var newVal = fieldValue.replace(keyupFilter, '')
-						field.val( newVal )
-						// 触发原生 keyup 事件
-						if (fieldValue !== newVal) {
-	                		_fireEvent(field[0], 'keyup')
-							return;
-						}
+						field.val( fieldValue.replace(keyupFilter, '') )
+						// 触发原生change事件
+                		_fireEvent(field[0], 'keyup')
+						return;
 					}
 				}
 			}
@@ -244,7 +240,8 @@
 			validate: function() {
 				var options = this.settings,
 					form = this.element,
-					formValid = true;
+					formValid = true,
+					fields
 
 				fields = form.find(allTypes).filter(options.filter)
 				fields.each(function() {
@@ -293,8 +290,8 @@
 }(jQuery);
 $.validatorExtend({
 	float2 : {
-	    required : true,
-	    pattern : /^[\d]+\.?[\d]{0,2}$/,
+	    required : false,
+	    pattern : /^[\d]*\.?[\d]{0,2}$/,
 	    keyupFilter: /[^\d\.]*/g,
 	    keydownFilter: function(e) {
 	    	var keyCode = e.keyCode
@@ -311,10 +308,10 @@ $.validatorExtend({
 	    	e.preventDefault()
 	    	return false
 	    },
-	    msg: '必填项,只允许填写数字(最多两位小数)'
+	    msg: '只允许填写数字(最多两位小数)'
 	},
 	integer : {
-	    required : true,
+	    required : false,
 	    pattern : /^[\d]*$/,
 	    keyupFilter: /[^\d]*/g,
 	    keydownFilter: function(e) {
@@ -330,6 +327,6 @@ $.validatorExtend({
 	    	e.preventDefault()
 	    	return false
 	    },
-	    msg: '必填项,只允许填写数字'
+	    msg: '只允许填写数字'
 	}
 });
